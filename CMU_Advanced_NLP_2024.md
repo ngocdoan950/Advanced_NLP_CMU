@@ -191,15 +191,60 @@
 + Efficiency tricks: Mini-batching
     - ý tưởng: việc thực hiện nhiều phép toàn giống nhau cùng lúc nhanh hơn nhiều so với thực hiện từng phép toán 1.
 
+    - **Recommend**: tính kích thước mini-batch dựa trên số lượng token trong mini-batch.
+
     ![efficiency_tricks_mini_batching](./figures/efficiency_tricks_mini_batching.png)
 
 + GPUs and CPUs
+    - khác nhau CPUs & GPUs là tốc độ khởi động & hiệu suất tính toán dữ liệu lớn.
 
 + A simple example:
+   ![cpu_gpu_caculate_matrix](./figures/cpu_gpu_caculate_matrix.png)
 
 + Speed tricks
+    - hạn chế lặp lại các phép toán. Thay vì tính toán trên vector thì tính toán trên matrix.
+    - giảm thiểu việc di chuyển dữ liệu giữa CPU & GPU
+        - nếu bắt buộc di chuyển bộ nhớ -> cố gắng thực hiện càng sớm & càng ít lần càng tốt.
 
 ## Lecture 4. Sequence Modeling
+
+### NLP and Sequential Data
+
+### Types of Sequential Prediction Problems
+
+### An Aside: More on Sequence Labeling
+
+### Types of Sequence Models
+
+### A Sequence Model: Recurrent Neural Networks
+
+### Vanishing Gradients
+
+### Convolution
+
+### Attention
+
++ Basic idea
+    - cho phép mã hóa từng token trong 1 chuỗi -> vector:
+        - thực hiện phép kết hợp tuyến tính của các vector + các trọng số được xác định bởi attention weights.
+        
+        - ! Kết hợp như thế nào ? hãy mô tả rõ ?
+
++ Cross attention:
+    - mỗi phần tử trong 1 chuỗi sẽ chú đến các phần tử trong chuỗi khác. Với các mô hình encoder-decoder: T5 & BERT 
+        
+        - ! hãy làm rõ
+
++ Self attention:
+    - cho phép mỗi phần tử trong chuỗi chú ý đến các phần tử khác trong cùng một chuỗi.
+        - vd: mã hóa 1 câu tiếng anh trước khi dịch sang tiếng việt.
+
++ Calculating attention:
+    - 
+
+### Application of Sequence Models
+
+### Efficient tricks for Sequence Modeling
 
 ## Lecture 5. Transformers
 
@@ -207,7 +252,7 @@
 
 ## Lecture 7. Prompting
 
-## Lecture 8. Fine tuning and Instruction tuning
+## Lecture 8. Fine tuning and Instruction tuning)
 
 ## Lecture 9. 
 
