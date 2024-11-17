@@ -225,6 +225,7 @@
 ### Attention
 
 + Basic idea
+    - *ý tưởng*: tìm cách kết nối mỗi điểm của encoder tới thẳng decoder => encoder-decoder + Attention 
     - cho phép mã hóa từng token trong 1 chuỗi -> vector:
         - thực hiện phép kết hợp tuyến tính của các vector + các trọng số được xác định bởi attention weights.
         
@@ -240,13 +241,236 @@
         - vd: mã hóa 1 câu tiếng anh trước khi dịch sang tiếng việt.
 
 + Calculating attention:
-    - 
+    - các giá trị attention không phải là xác suất
+
++ Attention score functions
+    - attention score function:
+        - trong các kiến trúc transformers
+
++ Masking for training 
+    - *với autogressive model, không nên tham chiếu đến thông tin tương lai*
+        - vi phạm nguyên tắc & tạo ra mô hình không xác suất ??? <~> không hiệu quả khi cần sinh dữ liệu từ trái -> phải.
+    - Masking (số âm vô cùng): ngăn chặn việc sử dụng thông tin từ tương lai.
+        - mô hình không có điều kiện => tránh xa thông tin trong tương lai
+        - mô hình có điều kiện => sử dụng thông tin 2 chiều để tính toán các đại diện, nhưng k được thực hiện ở phía mục tiêu.
+
 
 ### Application of Sequence Models
 
++ Encoding Sequences
+
++ Encoding tokens
+
 ### Efficient tricks for Sequence Modeling
 
++ Handling mini-batching 
+    - problem: các từ phụ thuộc vào từ trước đó -> với các sequences có kích thước khác nhau 
+    - solution:
+        - padding & masking nhằm đồng bộ hóa độ dài.
+
++ Bucketing/sorting
+    - khi xử lý nhiều câu có độ dài không đều => lãng phí tài nguyên tính toán
+        - độ chênh lệch quá lớn có thể dẫn tới thiếu bộ nhớ GPU ? tại sao ???
+    - solutions:
+        - sort các câu theo kích thước trước khi tạo mini-batch -> trade-off: giảm tính ngẫu nhiên trong phân phối dữ liệu (ảnh hưởng SGD)
+
++ Stride architectures
+
++ truncated BPTT
+
 ## Lecture 5. Transformers
+
+### Transformers
++ Two types of Transformers:
+    - Encoder-decoder (T5, BART)
+        - clearly inputs & outputs (tóm tắt văn bản hoặc dịch ngôn ngữ)
+    - Decoder only (GPT, LLaMA)
+        - unclearly inputs & outputs (chat bot)
+        - đơn giản
+
++ Common elements:
+    - (Input) Embedding
+    - Positional encodings
+    - Multi-head attention blocks
+        - attention task
+    - Feed-forward blocks
+        - combine features that be calculated
+
++ Core Transformers Concepts
+    - Multi-head attention
+    - Positional encodings
+    - Masked attention
+    - Residual + layer normalization
+
++ **?** chuẩn hóa phân đoạn subword
+
+### Multi-head Attention
+
++ Intuition (trực giác) for Multi-heads
+    - thông tin từ các thành phần khác nhau có thể hữu ích nhiều cách khác nhau phụ thuộc vào ngữ cảnh.
+        - example: "run a business" & "physically run"
+    - nói cách khác, pp này cho phép bạn xem xét từ trên nhiều ngữ cảnh khác nhau.
+
++ Concept
+    - tập hợp vector truy vấn (query vector) & vector khóa (key vector) (số lượng không nhất thiết bằng nhau)
+        - **?** vector giá trị (value vector)
+
+    ![Multi-head Attention_concept](./figures/Multi-head%20Attention_concept.jpg)
+
+    - Trình tự tính: 
+        - Q * K * V 
+    ![cal_multi_head_attention](./figures/cal_multi_head_attention.jpg)
+
+    - Coding:
+
++ What Happens w/ Multi-heads?
+
+
+### Positional Encoding ~ mã hóa vị trí
++ Một vài điểm chú ý:
+    - được thêm vào kèm embedding
+    - nhằm giải quyết vấn đề ngữ cảnh 
+    - **?** liệu đã đủ
+
++ Sinusoidal Encoding **?**
+    - ý tưởng mã hóa vị trí dựa theo hàm sin/cos
+        - vị trí chẵn hàm sin & lẻ hàm cos **?**
+
+        ![Sinusoidal_Encoding](./figures/Sinusoidal_Encoding.jpg)
+    
+    - **Mục đích**:
+
++ Learned Encoding
+    - học các mã hóa - tạo ra 1 embedding có thể học được mà chỉ cần thêm vào
+
+    - 
+
+    - Nhược: 
+        - việc suy diễn ra các chuỗi dài hơn so với những gì thấy trong quá trình training là không thể.
+
++ Absolute vs. Relative Encodings
+    - so sánh giữa mã hóa vị trí tuyệt đối & tương đối:
+        - mã hóa tuyệt đối như 2 pp trên: việc thêm vào vị trí mà không xem xét khoảng cách giữa vector truy vấn & vector khóa ~ không cân nhắc khoảng cách giữa các vector.
+            - **?** vector khóa thể hiện khoảng cách.
+        - mã hóa tương đối:
+            - không cân nhắc vị trí chính xác của embedding
+            - quan tâm đến khoảng cách giữa embedding truy vấn & embedding khóa
+    - Nhược điểm: tốn chi phí tính toán vì phải thêm vào
+
++ Rotary Positional Encoding ~ mã hóa vị trí xoay vòng
+    - Ý tưởng: 
+        - tạo ra 1 vector mã hóa embedding kết hợp vector thực tế & vị trí (? - định nghĩa 2 vectors)
+        - tạo ra 1 vector mã hóa khác kết hợp vector tuyệt đối + vị trí
+        - tích 2 vector => hàm chỉ phụ thuộc 2 vectors & vị trí tương đối <-> loại bỏ thông tin vector vị trí tuyệt đối.
+        
+        ![RotaryPositionalEncoding](./figures/RotaryPositionalEncoding.jpg)
+
+        - ? mô hình có khả năng tổng quát tốt hơn khi gặp các đầu ra mới.
+
+    - dùng trong LLaMA & tác động tốt đến tinh chỉnh các mô hình.
+
+
+### Layer Normalization and Residual Connections
+
+- Trong RNN, các mô hình thường gặp vấn đền suy hao gradients 
+
++ Layer Normalization
+    - ngăn chặn gradient bủng nổ hoặc không ổn định 
+        - ? tại sao gradient lại bị như thế ? ngăn chặn ntn ?
+    - Layer Normalization - chuẩn hóa đầu vào trong 1 range -> giảm thiểu sự biến thiên trong quy mô
+        - tính toán trung bình các vector
+        - tính độ lệch chuẩn
+        - tính căn bậc 2 của tổng độ lệch chuẩn
+
+        ![layer_normalization](./figures/layer_normalization.jpg)
+    
+    - ngoài ra, việc thêm độ lệnh chuản + nhân hệ số khuếch đại.
+        - lợi ích:
+            - các vector nằm trong không gian nhất quán với vị trí + độ phân tán được xác định bởi bias + gain.
+
+    - Batch Normalization chuẩn hóa toàn bộ các phần tử trên 1 batch.Tập dữ liệu chia thành nhiều batches
+    - Những trường hợp dùng Layer Normalization ? không phụ thuộc vào việc chia batch
+
+
++ RMSNorm ~ Square Normalization
+    - Tương tụ như Layer Norm nhưng loại bỏ chuẩn hóa trung bình ~ giữ nguyên các điểm trong không gian nhưng thực hiện chuẩn hóa lại độ khuếch tán giữa chúng.
+
+        ![rms](./figures/rms.jpg)
+
+    - RMS không thực sự tốt hơn Layer Norm nhưng nhanh hơn do giảm lược 1 bước tính toán + giản lược bias chỉ giữ gain.
+
++ Residual Connections
+    - *Là kết nối cộng giữa đầu vào và đầu ra* 
+        - ? kết nối ntn ?
+        - mục tiêu: 
+            - thay vì ánh xạ từ đầu vào -> đầu ra
+            - áp dụng sự khác biệt từ đầu vào
+        - Lợi ích kết nối phần dư:
+            - giảm thiếu việc chú ý đến chính nó mà thay vào đó sẽ tập trung vào các thông tin xung quanh -> hiểu rõ hơn về ngữ cảnh.
+                - Thông tin từ của mỗi từ được 
+
+        ![residual_connection](./figures/residual_connection.jpg)
+
++ Post- vs. Pre-Layer Norm
+    - ban đầu: Layer Norm áp dụng sau multi-head attention & feed-forward network.
+        - ảnh hưởng: khó khăn lan truyền gradient khi có 1 hàm khác ngoài hàm đồng nhất (identity) ở giữa các lớp.
+        - ! bất kì hàm nào ngoài hàm đồng nhất đều có thể thay đổi gradient.
+    - Việc sử dụng pre-layer norm với layer norm áp dụng trước các lớp multi-head attention & feed-forward.
+        - tạo ra 1 kết nối phần dư trực tiếp từ đầu đến cuối => cải thiện tryền gradient & giúp quá trình training ổn định hơn.
+
+    ![Post- vs. Pre-Layer Norm](./figures/Post_vs_Pre-LayerNorm.jpg)
+
+### Feed Forward Layers
+
++ Feed Forward Layers
+    - trích xuất các đặc trưng (từng vector trong chuỗi) kết hợp đầu ra đã được chú ý.
+        - ? việc loại bỏ bias do tham số này không thực sự cần thiết.
+
+    ![feed_forward_layers](./figures/feed_forward_layers.jpg)
+
+    - hàm f:
+        - thường là loại phi tuyến
+        - mỗi phần tử trong vector ~ 1 feature. 
+        - mạng này mở rộng đến vector lớn hơn để trích xuất nhiều đặc trưng.
++ Some Activation Functions in Transformers
+    - ReLU (0, x)
+        - *Problem*: khi đầu vào nhỏ hơn 0 -> gradietn = 0
+        - *Solution*: SiLU
+
+        ![activation_func_transformers](./figures/activation_func_transformers.jpg)
+
+### Optimization Tricsk for Transformers
+
++ Transformers are Powerful but Fickle
+
++ Optimizers for Transformers
+    - SGD - hướng giảm thiểu hàm mất mát
+    - Adam - thêm thành phần động lượng & chuẩn hóa theo độ lẹch chuẩn của các đầu ra -> ? cập nhật các tham số (ít được cập nhật) thường xuyên hơn
+
++ Low-Precision Training
+    - giảm thiểu tốn kém trong training bằng việc giảm: 32 bits -? 16 bits
+        - fp 16 
+        - bfoat 16
+
++ Checkpointing/ Restarts
+    - lưu lại checkpoints giúp khởi động lại nhanh tiến trình training
+        - ?  trong quá trình huấn luyện của Meta, khi theo dõi độ lớn của gradient, có thể thấy rằng nó đột ngột tăng cao, điều này thường chỉ ra một vấn đề. Sau khi tăng đột biến, perplexity của mô hình có thể giảm xuống một thời gian, nhưng sau đó lại bắt đầu tăng lên, cho thấy mô hình đang ở trong một trạng thái không tốt trong không gian tham số
+
+### Comparing Transformers Architectures
+
++ Original Transformers vs. LlaMa
+    - Transformers:
+        - post-norm
+        - LayerNorm
+        - ReLU
+    - LlaMa:
+        - pre-norm
+        - RMSNorm
+        - SiLU
++ How Important is It?
+    - perplexity metrics
+
+    ![compare_transformer_llama](./figures/compare_transformer_llama.jpg)
 
 ## Lecture 6. Generation Algorithms
 
